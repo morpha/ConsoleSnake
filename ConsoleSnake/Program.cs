@@ -10,11 +10,12 @@
             Right
         }
 
+        private static bool _running = true;
         private static Direction _direction = Direction.Up;
         static void Main(string[] args)
         {
             Console.SetCursorPosition(Console.WindowWidth/2, Console.WindowHeight/2);
-            for(int i = 1; ;++i)
+            while(_running)
             {
                 HandleInput();
                 ProcessMovement();
@@ -69,6 +70,9 @@
                     case ConsoleKey.RightArrow:
                     case ConsoleKey.D:
                         _direction = Direction.Right;
+                        break;
+                    case ConsoleKey.Escape:
+                        _running = false;
                         break;
                 }
             }
