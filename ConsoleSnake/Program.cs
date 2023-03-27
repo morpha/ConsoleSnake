@@ -34,7 +34,7 @@ namespace ConsoleSnake
             public Int32 Y { get; set; }
         }
 
-        private static PlayArea _playArea;
+        private static PlayArea _playArea = new PlayArea(1, 4, Console.WindowWidth - 2, Console.WindowHeight - 2);
         private static bool _running = true;
         private static bool _growing = false;
         private static Direction _direction = Direction.Up;
@@ -44,8 +44,7 @@ namespace ConsoleSnake
         static void Main(string[] args)
         {
             Console.ReadKey();
-            Console.WindowWidth -= Console.WindowWidth % 2;
-            Console.WindowHeight -= Console.WindowHeight % 2;
+
             Console.SetBufferSize(Console.WindowWidth, Console.WindowHeight);
 
             DrawPlayArea();
@@ -57,9 +56,13 @@ namespace ConsoleSnake
 
             while (_running)
             {
+                DateTime beginFrame = DateTime.Now;
                 HandleInput();
                 AllSnakeThings();
-                Thread.Sleep(50);
+                TimeSpan frameTime = DateTime.Now.Subtract(beginFrame);
+
+                if(50 - frameTime.Milliseconds > 0)
+                    Thread.Sleep(50 - frameTime.Milliseconds);
             }
         }
 
@@ -70,14 +73,19 @@ namespace ConsoleSnake
             {
                 Console.CursorTop = top;
                 Console.CursorLeft = 0;
-                if (top == 0 || top == Console.WindowHeight - 1)
-                    for (Int32 row = 0; row < Console.WindowWidth; ++row)
+                if (top < _playArea.TopEdge || top > _playArea.BottomEdge)
+                    for (Int32 left = 0; left < Console.WindowWidth; ++left)
                         Console.Write(' ');
                 else
                 {
-                    Console.Write(' ');
+                    for (Int32 left = 0; left < _playArea.LeftEdge; ++left)
+                        Console.Write(' ');
+                    //Console.CursorLeft = _playArea.RightEdge+1;
+                    for (Int32 left = Console.CursorLeft = _playArea.RightEdge + 1; left < Console.WindowWidth; ++left)
+                        Console.Write(' ');
+                    /*Console.Write(' ');
                     Console.CursorLeft = Console.WindowWidth-1;
-                    Console.Write(' ');
+                    Console.Write(' ');*/
                 }
             }
             /*for (Int32 top = _playArea.Top; top < _playArea.Height; ++top)
@@ -93,7 +101,7 @@ namespace ConsoleSnake
         }
         private static void Reset()
         {
-            _playArea = new PlayArea(1, 1, Console.WindowWidth - 2, Console.WindowHeight - 2);
+            _playArea = new PlayArea(1, 4, Console.WindowWidth - 2, Console.WindowHeight - 2);
             _running = true;
             _growing = false;
             _direction = Direction.Up;
@@ -111,7 +119,7 @@ namespace ConsoleSnake
             Position2D oldCursorPos = new Position2D(Console.CursorLeft, Console.CursorTop);
             do
             {
-                _food = new Position2D(rng.Next(3, Console.WindowWidth - 10), rng.Next(3, Console.WindowHeight - 3));
+                _food = new Position2D(rng.Next(_playArea.LeftEdge+1, _playArea.RightEdge), rng.Next(_playArea.TopEdge, _playArea.BottomEdge));
             } while (_snakeSegments.Contains(_food));
             MoveCursor(_food);
             Console.ForegroundColor = ConsoleColor.Red;
