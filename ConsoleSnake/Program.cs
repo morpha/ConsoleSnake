@@ -37,6 +37,7 @@ namespace ConsoleSnake
 
         private struct Snake
         {
+            public bool Alive = true;
             public Direction Direction { get; set; } = Direction.Down;
             public Position2D HeadPosition { get; set; } = new Position2D();
             public List<Position2D> Segments { get; set; } = new List<Position2D>();
@@ -53,8 +54,13 @@ namespace ConsoleSnake
         private static Snake _snakeP2 = new Snake();
         private static Position2D _food = new Position2D(-1,-1);
         private static Random rng = new Random();
+        private static Int32 _desiredFrameTime = 75;
+
+        private static DateTime _frameTiming = DateTime.Now;
         static void Main(string[] args)
         {
+            String blub = null;
+            WriteColAt(blub, ConsoleColor.DarkBlue, 0, 0);
             Console.ReadKey();
 
             Console.SetBufferSize(Console.WindowWidth, Console.WindowHeight);
@@ -68,14 +74,20 @@ namespace ConsoleSnake
 
             while (_running)
             {
-                DateTime beginFrame = DateTime.Now;
+                TimeFrame();
                 HandleInput();
                 AllSnakeThings();
-                TimeSpan frameTime = DateTime.Now.Subtract(beginFrame);
-
-                if(50 - frameTime.Milliseconds > 0)
-                    Thread.Sleep(50 - frameTime.Milliseconds);
             }
+        }
+
+        private static void TimeFrame()
+        {
+            TimeSpan frameTime = DateTime.Now.Subtract(_frameTiming);
+            if(frameTime.Milliseconds < _desiredFrameTime)
+            {
+                Thread.Sleep(_desiredFrameTime - frameTime.Milliseconds);
+            }
+            _frameTiming = DateTime.Now;
         }
 
         private static void DrawPlayArea()
@@ -116,22 +128,24 @@ namespace ConsoleSnake
             SpawnFood();
         }
 
-        private static void SpawnFood()
+        private static bool SnakeCollision(Position2D position)
         {
-            //Position2D oldCursorPos = new Position2D(Console.CursorLeft, Console.CursorTop);
-            do
-            {
-                _food = new Position2D(rng.Next(_playArea.LeftEdge+1, _playArea.RightEdge), rng.Next(_playArea.TopEdge, _playArea.BottomEdge));
-            } while (_snakeP1.Segments.Contains(_food) || _snakeP2.Segments.Contains(_food));
-            MoveCursor(_food);
-            Console.ForegroundColor = ConsoleColor.Red;
-            Console.Write('@');
-            //MoveCursor(oldCursorPos);
+            return _snakeP1.Segments.Contains(position) || _snakeP2.Segments.Contains(position);
         }
 
-        private static void WriteColAt(char text, ConsoleColor color, Position2D pos) => WriteColAt(text.ToString(), color, pos.X, pos.Y);
+        private static void SpawnFood()
+        {
+            while (SnakeCollision(_food = new Position2D(rng.Next(_playArea.LeftEdge + 1, _playArea.RightEdge), rng.Next(_playArea.TopEdge, _playArea.BottomEdge))))
+            {
+
+            }
+
+            WriteColAt('@', ConsoleColor.Red, _food);
+        }
+
+        private static void WriteColAt(object text, ConsoleColor color, Position2D pos) => WriteColAt(text.ToString(), color, pos.X, pos.Y);
         private static void WriteColAt(string text, ConsoleColor color, Position2D pos) => WriteColAt(text, color, pos.X, pos.Y);
-        private static void WriteColAt(char text, ConsoleColor color, Int32 x, Int32 y) => WriteColAt(text.ToString(), color, x, y);
+        private static void WriteColAt(object text, ConsoleColor color, Int32 x, Int32 y) => WriteColAt(text.ToString(), color, x, y);
         private static void WriteColAt(string text, ConsoleColor color, Int32 x, Int32 y)
         {
             Console.SetCursorPosition(x, y);
@@ -147,12 +161,12 @@ namespace ConsoleSnake
         }
         private static void GrowSnakes()
         {
-            if (_snakeP1.Segments.Count > 0)
+            if (_snakeP1.Alive)
             {
                 _snakeP1.Segments.Add(_snakeP1.HeadPosition);
                 WriteColAt('#', ConsoleColor.Green, _snakeP1.HeadPosition);
             }
-            if (_snakeP2.Segments.Count > 0)
+            if (_snakeP2.Alive)
             {
                 _snakeP2.Segments.Add(_snakeP2.HeadPosition);
                 WriteColAt('#', ConsoleColor.Cyan, _snakeP2.HeadPosition);
@@ -182,6 +196,7 @@ namespace ConsoleSnake
                 foreach(Position2D segment in _snakeP1.Segments)
                     DeleteAt(segment);
                 _snakeP1.Segments.Clear();
+                _snakeP1.Alive = false;
                 return;
             }
             // P2 pepsi?
@@ -190,13 +205,12 @@ namespace ConsoleSnake
                 foreach (Position2D segment in _snakeP2.Segments)
                     DeleteAt(segment);
                 _snakeP2.Segments.Clear();
+                _snakeP2.Alive = false;
                 return;
             }
             // everyone pepsi? game over?!
-            if(_snakeP1.Segments.Count == 0 && _snakeP2.Segments.Count == 0)
+            if(!_snakeP1.Alive && !_snakeP2.Alive)
                 _running = false;
-
-            GrowSnakes();
 
             if(Collision(_food, _snakeP1.HeadPosition))
             {
@@ -208,7 +222,7 @@ namespace ConsoleSnake
                 SpawnFood();
             }
 
-            // growth P1
+            // Delete P1 tail if not growing
             if (!_snakeP1.Growing && _snakeP1.Segments.Count > 0)
             {
                 DeleteAt(_snakeP1.Segments.First());
@@ -216,7 +230,7 @@ namespace ConsoleSnake
             }
             else
                 _snakeP1.Growing = false;
-            // growth P2
+            // Delete P2 tail if not growing
             if (!_snakeP2.Growing && _snakeP2.Segments.Count > 0)
             {
                 DeleteAt(_snakeP2.Segments.First());
@@ -224,6 +238,8 @@ namespace ConsoleSnake
             }
             else
                 _snakeP2.Growing = false;
+
+            GrowSnakes();
         }
 
         private static void ProcessMovement()
