@@ -1,6 +1,4 @@
-﻿using System.ComponentModel.Design;
-
-namespace ConsoleSnake
+﻿namespace ConsoleSnake
 {
     internal class Program
     {
@@ -48,8 +46,14 @@ namespace ConsoleSnake
             }
         }
 
+        const Int32 MINWIDTH = 82;
+        const Int32 MINHEIGHT = 35;
+
         private static PlayArea _playArea = new PlayArea(1, 4, Console.WindowWidth - 2, Console.WindowHeight - 2);
+
+        private static bool _gameRunning = true;
         private static bool _running = true;
+        
         private static Snake[] _snakes = { 
             new Snake(),
             new Snake()
@@ -59,24 +63,49 @@ namespace ConsoleSnake
         private static Int32 _desiredFrameTime = 75;
 
         private static DateTime _frameTiming = DateTime.Now;
+
+        static void Setup()
+        {
+            Console.SetWindowSize(MINWIDTH, MINHEIGHT);
+            Console.SetBufferSize(Console.WindowWidth, Console.WindowHeight);
+            Console.CursorVisible = false;
+        }
         static void Main(string[] args)
         {
             Console.ReadKey();
+            Setup();
+            AsciiArt.IntroAnimation();
+            MainLoop();
+        }
 
-            Console.SetBufferSize(Console.WindowWidth, Console.WindowHeight);
+        private static void ShowMenu()
+        {
+            Menu menu = new Menu();
+            menu.AddItem("Play [1P]", "Play a single-player game.", () => { return false; });
+            menu.AddItem("Play [2P]", "Play a two-player game.", () => { return false; });
+            menu.AddItem("Quit", "Quit the game.", () => { return _gameRunning = false; });
+            menu.Show();
+        }
 
-            DrawPlayArea();
-            
-            //Console.WindowWidth -= 1;
-            Console.ReadKey(true);
-            Reset();
-
-
-            while (_running)
+        private static void MainLoop()
+        {
+            //foreach (ConsoleColor col in Enum.GetValues(typeof(ConsoleColor)))
+            //{
+            //    Console.ForegroundColor = col;
+            //    Console.WriteLine(col);
+            //}
+            while (_gameRunning)
             {
-                TimeFrame();
-                HandleInput();
-                AllSnakeThings();
+                ShowMenu();
+                Reset();
+                DrawPlayArea();
+                AsciiArt.Countdown(col: ConsoleColor.Magenta);
+                while (_running)
+                {
+                    TimeFrame();
+                    HandleInput();
+                    AllSnakeThings();
+                }
             }
         }
 
@@ -113,6 +142,10 @@ namespace ConsoleSnake
         }
         private static void Reset()
         {
+            Console.ForegroundColor = ConsoleColor.White;
+            Console.BackgroundColor = ConsoleColor.Black;
+            Console.Clear();
+
             _playArea = new PlayArea(1, 4, Console.WindowWidth - 2, Console.WindowHeight - 2);
             _running = true;
 
@@ -122,6 +155,8 @@ namespace ConsoleSnake
             _snakes[1].Color = ConsoleColor.Cyan;
             _snakes[0].Segments.Clear();
             _snakes[1].Segments.Clear();
+            _snakes[0].Alive = true;
+            _snakes[1].Alive = true;
 
             // Set up anew
             _snakes[0].Segments.Add(_snakes[0].HeadPosition = new Position2D(Console.BufferWidth / 2, Console.BufferHeight / 2));
@@ -196,13 +231,18 @@ namespace ConsoleSnake
             {
                 if (snake.Alive)
                 {
-                    // is this snake running into the other snake or itself?
+                    // is this snake running into the other snake or itself? -> pepsi
                     if (SnakeCollision(snake.HeadPosition))
                     {
                         KillSnake(snake);
                         // everyone pepsi? game over?!
                         if (!_snakes[0].Alive && !_snakes[1].Alive)
+                        {
                             _running = false;
+                            AsciiArt.GameOver();
+                            Console.ReadKey();
+                        }
+                            
                         continue;
                     }
 
