@@ -1,4 +1,8 @@
-﻿namespace ConsoleSnake
+﻿using System.Data;
+using System.Xml.Linq;
+using CC = ConsoleCompanion;
+
+namespace ConsoleSnake
 {
     internal class Program
     {
@@ -8,6 +12,12 @@
             Down,
             Left,
             Right
+        }
+
+        public enum GameMode
+        {
+            Singleplayer,
+            Multiplayer
         }
 
         private struct PlayArea
@@ -49,44 +59,102 @@
         const Int32 MINWIDTH = 82;
         const Int32 MINHEIGHT = 35;
 
-        private static PlayArea _playArea = new PlayArea(1, 4, Console.WindowWidth - 2, Console.WindowHeight - 2);
+        private static PlayArea _playArea = new(1, 4, Console.WindowWidth - 2, Console.WindowHeight - 2);
 
         private static bool _gameRunning = true;
         private static bool _running = true;
-        
-        private static Snake[] _snakes = { 
+
+        private static GameMode _mode = GameMode.Singleplayer;
+
+        private static Snake[] _snakes = {
             new Snake(),
             new Snake()
         };
-        private static Position2D _food = new Position2D(-1,-1);
-        private static Random rng = new Random();
-        private static Int32 _desiredFrameTime = 75;
+        private static Position2D _food = new(-1, -1);
+        private static Random rng = new();
+
+        private static Int32 _windowWidth = MINWIDTH;
+        private static Int32 _windowHeight = MINHEIGHT;
+
+        private static Int32 _desiredFrameTime = 50;
 
         private static DateTime _frameTiming = DateTime.Now;
 
         static void Setup()
         {
-            Console.SetWindowSize(MINWIDTH, MINHEIGHT);
-            Console.SetBufferSize(Console.WindowWidth, Console.WindowHeight);
+            CC.Resize(_windowWidth, _windowHeight);
             Console.CursorVisible = false;
+
+            Console.ForegroundColor = ConsoleColor.White;
+            Console.BackgroundColor = ConsoleColor.Black;
+            Console.Clear();
+
+            _playArea = new PlayArea(1, 4, Console.WindowWidth - 2, Console.WindowHeight - 2);
         }
         static void Main(string[] args)
         {
-            Console.ReadKey();
             Setup();
-            AsciiArt.IntroAnimation();
+            Intro();
             MainLoop();
+        }
+        static void Intro()
+        {
+            AsciiArt.IntroAnimation();
+        }
+
+        static void Options()
+        {
+            Menu menu = new();
+            menu.AddItem("Window Size", "Play a single-player game.", () => { _windowWidth = Console.WindowWidth; _windowHeight = Console.WindowHeight; Setup(); return true; });
+            menu.AddItem("Some Option 2", "Play a two-player game.", () => { return true; });
+            menu.AddItem("Some Option 3", "Change game options.", () => { return true; });
+            menu.AddItem("Back", "Return to the menu.", () => { return false; });
+            menu.Show();
         }
 
         private static void ShowMenu()
         {
-            Menu menu = new Menu();
-            menu.AddItem("Play [1P]", "Play a single-player game.", () => { return false; });
-            menu.AddItem("Play [2P]", "Play a two-player game.", () => { return false; });
-            menu.AddItem("Quit", "Quit the game.", () => { return _gameRunning = false; });
+            Menu menu = new();
+            menu.AddItem("Play [1P]", "Play a single-player game.", () => { _mode = GameMode.Singleplayer;  return false; });
+            menu.AddItem("Play [2P]", "Play a two-player game.", () => { _mode = GameMode.Multiplayer; return false; });
+            menu.AddItem("Options", "Change game options.", () => { Options(); return true; });
+            menu.AddItem("Quit", "Quit the game.", () => { _gameRunning = false;  return false; });
             menu.Show();
         }
 
+        public static bool WindowIntegrity(Action postfix)
+        {
+            bool tainted;
+            if(tainted = WindowIntegrity())
+                postfix();
+            return tainted;
+        }
+
+        /// <summary>
+        /// Checks whether the window size has changed, changes it to at least the minimum set via MINXXX constants if needed and updates the internal bounds.
+        /// </summary>
+        /// <returns>true if the window size has changed and the screen buffer has been tainted.</returns>
+        public static bool WindowIntegrity()
+        {
+            bool tainted = false;
+            if (tainted = Console.WindowHeight != _windowHeight)
+            {
+                _windowHeight = (Console.WindowHeight < MINHEIGHT ? MINHEIGHT : Console.WindowHeight);
+            }
+            if (Console.WindowWidth != _windowWidth)
+            {
+                tainted = true;
+                _windowWidth = (Console.WindowWidth < MINWIDTH ? MINWIDTH : Console.WindowWidth);
+            }
+
+            if (tainted)
+            {
+                Console.CursorVisible = false;
+                CC.Resize(_windowWidth, _windowHeight);
+            }
+
+            return tainted;
+        }
         private static void MainLoop()
         {
             //foreach (ConsoleColor col in Enum.GetValues(typeof(ConsoleColor)))
@@ -96,15 +164,33 @@
             //}
             while (_gameRunning)
             {
-                ShowMenu();
-                Reset();
-                DrawPlayArea();
-                AsciiArt.Countdown(col: ConsoleColor.Magenta);
-                while (_running)
+                try
                 {
-                    TimeFrame();
-                    HandleInput();
-                    AllSnakeThings();
+                    WindowIntegrity(Setup);
+                    Console.Clear();
+                    AsciiArt.CNake(AsciiArt.TextAlignment.Centered, AsciiArt.TextAlignment.Top, offsetTop: 1);
+                    ShowMenu();
+                    if (!_gameRunning)
+                        break;
+                    Console.Clear();
+                    Reset();
+                    DrawPlayArea();
+                    AsciiArt.Countdown(col: ConsoleColor.Magenta);
+                    SpawnFood();
+
+                    while (_running)
+                    {
+                        if (WindowIntegrity())
+                        {
+                        }
+                        TimeFrame();
+                        HandleInput();
+                        AllSnakeThings();
+                    }
+                }
+                catch (System.ArgumentOutOfRangeException)
+                {
+                    WindowIntegrity(Setup);
                 }
             }
         }
@@ -142,11 +228,6 @@
         }
         private static void Reset()
         {
-            Console.ForegroundColor = ConsoleColor.White;
-            Console.BackgroundColor = ConsoleColor.Black;
-            Console.Clear();
-
-            _playArea = new PlayArea(1, 4, Console.WindowWidth - 2, Console.WindowHeight - 2);
             _running = true;
 
             _snakes[0].Direction = Direction.Right;
@@ -156,12 +237,12 @@
             _snakes[0].Segments.Clear();
             _snakes[1].Segments.Clear();
             _snakes[0].Alive = true;
-            _snakes[1].Alive = true;
+            _snakes[1].Alive = _mode == GameMode.Multiplayer;
 
             // Set up anew
-            _snakes[0].Segments.Add(_snakes[0].HeadPosition = new Position2D(Console.BufferWidth / 2, Console.BufferHeight / 2));
-            _snakes[1].Segments.Add(_snakes[1].HeadPosition = new Position2D(Console.BufferWidth / 2 - 1, Console.BufferHeight / 2));
-            SpawnFood();
+            _snakes[0].Segments.Add(_snakes[0].HeadPosition = new Position2D(CC.CenterX, CC.CenterY));
+            if(_mode == GameMode.Multiplayer)
+                _snakes[1].Segments.Add(_snakes[1].HeadPosition = new Position2D(CC.CenterX - 1, CC.CenterY));
         }
 
         private static bool SnakeCollision(Position2D position)
@@ -184,17 +265,11 @@
         private static void WriteColAt(object text, ConsoleColor color, Int32 x, Int32 y) => WriteColAt(text.ToString(), color, x, y);
         private static void WriteColAt(string text, ConsoleColor color, Int32 x, Int32 y)
         {
-            Console.SetCursorPosition(x, y);
+            CC.CursorPosition = (x, y);
             Console.ForegroundColor = color;
             Console.Write(text);
         }
 
-        private static void MoveCursor(Position2D pos) => MoveCursor(pos.X, pos.Y);
-        private static void MoveCursor(Int32 left, Int32 top)
-        {
-            Console.SetCursorPosition(left, top);
-            Console.CursorVisible = false;
-        }
         private static void GrowSnake(Snake snake)
         {
             snake.Segments.Add(snake.HeadPosition);
@@ -204,7 +279,7 @@
         private static void DeleteAt(Position2D pos) => DeleteAt(pos.X, pos.Y);
         private static void DeleteAt(Int32 x, Int32 y)
         {
-            MoveCursor(x, y);
+            CC.CursorPosition = (x, y);
             Console.Write(' ');
         }
 
@@ -238,11 +313,9 @@
                         // everyone pepsi? game over?!
                         if (!_snakes[0].Alive && !_snakes[1].Alive)
                         {
-                            _running = false;
-                            AsciiArt.GameOver();
-                            Console.ReadKey();
+                            GameOver();
                         }
-                            
+
                         continue;
                     }
 
@@ -261,6 +334,17 @@
                 }
 
             }
+        }
+
+        private static void GameOver()
+        {
+            _running = false;
+            AsciiArt.GameOver();
+            Console.Beep(800, 200);
+            Console.Beep(700, 150);
+            Console.Beep(500, 100);
+            Console.Beep(300, 100);
+            Console.ReadKey();
         }
 
         private static void ProcessMovement()

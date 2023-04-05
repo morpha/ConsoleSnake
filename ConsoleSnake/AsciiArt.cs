@@ -3,11 +3,15 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using CC = ConsoleCompanion;
 
 namespace ConsoleSnake
 {
     internal static class AsciiArt
     {
+        /// <summary>
+        /// Commonly used text alignments in horizontal and vertical directions.
+        /// </summary>
         public enum TextAlignment
         {
             Left,
@@ -28,7 +32,7 @@ namespace ConsoleSnake
                     left = 0;
                     break;
                 case TextAlignment.Centered:
-                    left = Console.WindowWidth / 2 - numColumns / 2;
+                    left = CC.CenterX - numColumns / 2;
                     break;
                 case TextAlignment.Right:
                     left = Console.WindowWidth - numColumns;
@@ -42,7 +46,7 @@ namespace ConsoleSnake
                     top = 0;
                     break;
                 case TextAlignment.Centered:
-                    top = Console.WindowHeight / 2 - numLines / 2;
+                    top = CC.CenterY - numLines / 2;
                     break;
                 case TextAlignment.Bottom:
                     top = Console.WindowHeight - numLines;
@@ -66,6 +70,9 @@ namespace ConsoleSnake
             }
         }
 
+        /// <summary>
+        /// Plays the intro animation while checking for input to cancel it.
+        /// </summary>
         public static void IntroAnimation()
         {
             bool loopRunning = true;
@@ -86,19 +93,33 @@ namespace ConsoleSnake
                 (ConsoleColor.DarkGray, 40),
             };
 
+            CC.Write("PRESS ANY KEY", CC.CenterX - 7, 20, ConsoleColor.White);
             while (loopRunning)
             {
-                foreach ((ConsoleColor col, Int32 sleepFor) frame in animFrames)
+                try
                 {
-                    CNake(TextAlignment.Centered, TextAlignment.Top, frame.col, offsetTop: 4);
-                    Thread.Sleep(frame.sleepFor);
-                    if (Console.KeyAvailable)
+                    foreach ((ConsoleColor col, Int32 sleepFor) frame in animFrames)
                     {
-                        Console.ReadKey();
-                        loopRunning = false;
+                        if (Program.WindowIntegrity(Console.Clear))
+                        {
+                            CC.Write("PRESS ANY KEY", CC.CenterX - 7, 20, ConsoleColor.White);
+                        }
+                        CNake(TextAlignment.Centered, TextAlignment.Top, frame.col, offsetTop: 4);
+                        Thread.Sleep(frame.sleepFor);
+                        if (Console.KeyAvailable)
+                        {
+                            Console.ReadKey();
+                            loopRunning = false;
+                            break;
+                        }
                     }
                 }
-            }
+                catch(System.ArgumentOutOfRangeException)
+                {
+                    Program.WindowIntegrity(Console.Clear);
+                    CC.Write("PRESS ANY KEY", CC.CenterX - 7, 20, ConsoleColor.White);
+                }
+        }
 
             Console.Clear();
         }
@@ -120,8 +141,8 @@ namespace ConsoleSnake
                 @"   \( |____|/    \(       )/    \(      )/    \(       )/    \( |_____|/ ",
                 @"    '   )/        '       '      '      '      '       '      '    )/    ",
                 @"        '                                                          '     ",
-                @"                                                                         ",
-                @"                               PRESS ANY KEY                             "
+                //@"                                                                         ",
+                //@"                               PRESS ANY KEY                             "
 
 
             };
