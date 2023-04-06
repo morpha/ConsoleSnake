@@ -6,54 +6,10 @@ namespace ConsoleSnake
 {
     internal class Program
     {
-        public enum Direction
-        {
-            Up,
-            Down,
-            Left,
-            Right
-        }
-
         public enum GameMode
         {
             Singleplayer,
             Multiplayer
-        }
-
-        private struct PlayArea
-        {
-            public PlayArea(Int32 left, Int32 top, Int32 right, Int32 bottom)
-            {
-                LeftEdge = left;
-                TopEdge = top;
-                RightEdge = right;
-                BottomEdge = bottom;
-            }
-            public Int32 LeftEdge { get; set; }
-            public Int32 TopEdge { get; set; }
-            public Int32 RightEdge { get; set; }
-            public Int32 BottomEdge { get; set; }
-        }
-
-        private struct Position2D
-        {
-            public Position2D() : this(-1, -1) { }
-            public Position2D(Int32 x, Int32 y) { X = x; Y = y; }
-            public Int32 X { get; set; }
-            public Int32 Y { get; set; }
-        }
-
-        private class Snake
-        {
-            public bool Alive = true;
-            public Direction Direction { get; set; } = Direction.Down;
-            public ConsoleColor Color { get; set; } = ConsoleColor.Green;
-            public Position2D HeadPosition { get; set; } = new Position2D();
-            public List<Position2D> Segments { get; set; } = new List<Position2D>();
-
-            public Snake()
-            {
-            }
         }
 
         const Int32 MINWIDTH = 82;
@@ -124,9 +80,13 @@ namespace ConsoleSnake
 
         public static bool WindowIntegrity(Action postfix)
         {
-            bool tainted;
-            if(tainted = WindowIntegrity())
-                postfix();
+            bool tainted = false ;
+            try
+            {
+                if (tainted = WindowIntegrity())
+                    postfix();
+            }
+            catch { }
             return tainted;
         }
 
@@ -272,7 +232,7 @@ namespace ConsoleSnake
 
         private static void GrowSnake(Snake snake)
         {
-            snake.Segments.Add(snake.HeadPosition);
+            snake.Grow();
             WriteColAt('#', snake.Color, snake.HeadPosition);
         }
 
@@ -292,9 +252,7 @@ namespace ConsoleSnake
         {
             foreach (Position2D segment in snake.Segments)
                 DeleteAt(segment);
-            snake.Segments.Clear();
-            snake.HeadPosition = new Position2D(-1, -1);
-            snake.Alive = false;
+            snake.Kill();
         }
 
         private static void AllSnakeThings()

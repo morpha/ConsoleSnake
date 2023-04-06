@@ -1,7 +1,9 @@
 ﻿using ConsoleSnake;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -18,22 +20,18 @@ static class ConsoleCompanion
     /// <param name="height">Desired height in lines as Int32.</param>
     public static void Resize(Int32 width, Int32 height)
     {
-        Console.SetWindowSize(width, height);
         try
         {
-            Console.SetBufferSize(Math.Max(Console.WindowWidth, Console.WindowLeft), Math.Max(Console.WindowHeight, Console.WindowTop));
+            Console.SetWindowSize(width, height);
+            Console.SetBufferSize(Console.WindowLeft + Console.WindowWidth, Console.WindowTop + Console.WindowHeight);
         }
-        catch (Exception e)
-        {
-            Console.WriteLine(e.Message);
-            Console.ReadKey();
-        }
+        catch { }
     }
 
     public static void Write(object text, Int32 x, Int32 y, ConsoleColor? foregroundColor = null, ConsoleColor? backgroundColor = null) => Write(text.ToString(), x, y);
     public static void Write(string text, Int32 x, Int32 y, ConsoleColor? foregroundColor = null, ConsoleColor? backgroundColor = null)
     {
-        Console.SetCursorPosition(x, y);
+        CursorPosition = (x, y);
         if(foregroundColor != null)
             Console.ForegroundColor = (ConsoleColor)foregroundColor;
         if (backgroundColor != null)
@@ -44,7 +42,8 @@ static class ConsoleCompanion
     public static (Int32 left, Int32 top) CursorPosition { 
         get => (Console.CursorLeft, Console.CursorTop); 
         set {
-            Console.SetCursorPosition(value.Item1, value.Item2);
+            try { Console.SetCursorPosition(value.Item1, value.Item2); }
+            catch { }
             Console.CursorVisible = false;
         }
     }
