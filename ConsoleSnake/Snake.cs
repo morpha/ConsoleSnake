@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection.Metadata.Ecma335;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
@@ -29,5 +30,11 @@ namespace ConsoleSnake
             HeadPosition = new Position2D(-1, -1);
             Alive = false;
         }
+
+        public static Snake operator ++(Snake snake) { snake.Grow(); return snake; }
+        public static bool operator >(Snake left, Snake right) => left.Segments.Count > right.Segments.Count;
+        public static bool operator <(Snake left, Snake right) => left.Segments.Count < right.Segments.Count;
+        public static bool operator >=(Snake left, Snake right) => left.Segments.Count >= right.Segments.Count;
+        public static bool operator <=(Snake left, Snake right) => left.Segments.Count <= right.Segments.Count;
     }
 }
