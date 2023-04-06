@@ -232,7 +232,7 @@ namespace ConsoleSnake
 
         private static void GrowSnake(Snake snake)
         {
-            snake.Grow();
+            ++snake;
             WriteColAt('#', snake.Color, snake.HeadPosition);
         }
 
