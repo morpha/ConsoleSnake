@@ -39,10 +39,13 @@ static class ConsoleCompanion
         Console.Write(text);
     }
 
+    /// <summary>
+    /// Set or get the cursor position as a tuple (left, top).
+    /// </summary>
     public static (Int32 left, Int32 top) CursorPosition { 
         get => (Console.CursorLeft, Console.CursorTop); 
         set {
-            try { Console.SetCursorPosition(value.Item1, value.Item2); }
+            try { Console.SetCursorPosition(value.left, value.top); }
             catch { }
             Console.CursorVisible = false;
         }

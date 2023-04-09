@@ -7,7 +7,7 @@ using CC = ConsoleCompanion;
 
 namespace ConsoleSnake
 {
-    internal static class AsciiArt
+    static class AsciiArt
     {
         /// <summary>
         /// Commonly used text alignments in horizontal and vertical directions.

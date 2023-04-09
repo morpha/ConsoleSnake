@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection.Metadata.Ecma335;
 using System.Text;
 using System.Threading.Tasks;
 using CC = ConsoleCompanion;
@@ -45,6 +46,12 @@ namespace ConsoleSnake
             InputAction action;
             while (running)
             {
+                if(Program.WindowIntegrity())
+                {
+                    Console.Clear();
+                    CalculateBounds();
+                    Draw();
+                }
                 action = HandleInput();
                 switch(action)
                 {
@@ -156,24 +163,14 @@ namespace ConsoleSnake
         }
         private static InputAction HandleInput()
         {
-            switch(Console.ReadKey(true).Key)
+            return Console.ReadKey(true).Key switch
             {
-                case ConsoleKey.UpArrow:
-                case ConsoleKey.W:
-                    return InputAction.PrevItem;
-
-                case ConsoleKey.DownArrow:
-                case ConsoleKey.S:
-                    return InputAction.NextItem;
-
-                case ConsoleKey.Enter:
-                case ConsoleKey.Spacebar:
-                    return InputAction.Enter;
-
-                case ConsoleKey.Escape:
-                    return InputAction.Escape;
-            }
-            return InputAction.Invalid;
+                ConsoleKey.UpArrow or ConsoleKey.W      => InputAction.PrevItem,
+                ConsoleKey.DownArrow or ConsoleKey.S    => InputAction.NextItem,
+                ConsoleKey.Enter or ConsoleKey.Spacebar => InputAction.Enter,
+                ConsoleKey.Escape                       => InputAction.Escape,
+                _                                       => InputAction.Invalid
+            };
         }
 
         /// <summary>

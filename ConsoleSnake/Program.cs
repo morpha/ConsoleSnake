@@ -1,4 +1,5 @@
 ﻿using System.Data;
+using System.Runtime.Intrinsics.X86;
 using System.Xml.Linq;
 using CC = ConsoleCompanion;
 
@@ -18,13 +19,13 @@ namespace ConsoleSnake
         private static PlayArea _playArea = new(1, 4, Console.WindowWidth - 2, Console.WindowHeight - 2);
 
         private static bool _gameRunning = true;
-        private static bool _running = true;
+        private static bool _roundRunning = true;
 
         private static GameMode _mode = GameMode.Singleplayer;
 
         private static Snake[] _snakes = {
-            new Snake(),
-            new Snake()
+            new Snake(0, 0),
+            new Snake(0, 0)
         };
         private static Position2D _food = new(-1, -1);
         private static Random rng = new();
@@ -127,8 +128,10 @@ namespace ConsoleSnake
                 try
                 {
                     WindowIntegrity(Setup);
+
                     Console.Clear();
                     AsciiArt.CNake(AsciiArt.TextAlignment.Centered, AsciiArt.TextAlignment.Top, offsetTop: 1);
+
                     ShowMenu();
                     if (!_gameRunning)
                         break;
@@ -138,11 +141,10 @@ namespace ConsoleSnake
                     AsciiArt.Countdown(col: ConsoleColor.Magenta);
                     SpawnFood();
 
-                    while (_running)
+                    while (_roundRunning)
                     {
                         if (WindowIntegrity())
-                        {
-                        }
+                            break;
                         TimeFrame();
                         HandleInput();
                         AllSnakeThings();
@@ -188,7 +190,7 @@ namespace ConsoleSnake
         }
         private static void Reset()
         {
-            _running = true;
+            _roundRunning = true;
 
             _snakes[0].Direction = Direction.Right;
             _snakes[1].Direction = Direction.Left;
@@ -233,7 +235,8 @@ namespace ConsoleSnake
         private static void GrowSnake(Snake snake)
         {
             ++snake;
-            WriteColAt('#', snake.Color, snake.HeadPosition);
+            Scoreboard.SetScore(0, snake);
+            WriteColAt('#', snake.Color, snake);
         }
 
         private static void DeleteAt(Position2D pos) => DeleteAt(pos.X, pos.Y);
@@ -255,6 +258,14 @@ namespace ConsoleSnake
             snake.Kill();
         }
 
+        private static bool AreAllSnakesDead()
+        {
+            foreach (Snake snake in _snakes)
+                if (snake.Alive)
+                    return false;
+            return true;
+        }
+
         private static void AllSnakeThings()
         {
 
@@ -265,27 +276,24 @@ namespace ConsoleSnake
                 if (snake.Alive)
                 {
                     // is this snake running into the other snake or itself? -> pepsi
-                    if (SnakeCollision(snake.HeadPosition))
+                    if (SnakeCollision(snake))
                     {
                         KillSnake(snake);
                         // everyone pepsi? game over?!
-                        if (!_snakes[0].Alive && !_snakes[1].Alive)
-                        {
+                        if (AreAllSnakesDead())
                             GameOver();
-                        }
 
                         continue;
                     }
 
                     // is this snake picking up food?
-                    if (Collision(_food, snake.HeadPosition))
+                    if (Collision(_food, snake))
                     {
                         SpawnFood();
                     }
                     else
                     {
-                        DeleteAt(snake.Segments.First());
-                        snake.Segments.Remove(snake.Segments.First());
+                        DeleteAt(snake.Tail());
                     }
 
                     GrowSnake(snake);
@@ -296,12 +304,9 @@ namespace ConsoleSnake
 
         private static void GameOver()
         {
-            _running = false;
+            _roundRunning = false;
             AsciiArt.GameOver();
-            Console.Beep(800, 200);
-            Console.Beep(700, 150);
-            Console.Beep(500, 100);
-            Console.Beep(300, 100);
+            Audio.GameOver();
             Console.ReadKey();
         }
 
@@ -309,7 +314,7 @@ namespace ConsoleSnake
         {
             foreach(Snake snake in _snakes)
             {
-                Position2D position = snake.HeadPosition;
+                Position2D position = snake;
 
                 switch (snake.Direction)
                 {
@@ -386,7 +391,7 @@ namespace ConsoleSnake
                         break;
 
                     case ConsoleKey.Escape:
-                        _running = false;
+                        _roundRunning = false;
                         break;
                 }
             }
