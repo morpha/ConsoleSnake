@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -33,6 +34,52 @@ namespace ConsoleSnake
         Body,
         Head,
         Wall
+    }
+
+    internal struct Vector2
+    {
+        public float X { get; set; }
+        public float Y { get; set; }
+
+        public Vector2() : this(0.0f, 0.0f) { }
+        public Vector2(float x, float y)
+        {
+            X = x;
+            Y = y;
+        }
+
+        public static Vector2 Zero => new Vector2(0.0f, 0.0f);
+
+        public static Vector2 UnitX => new Vector2(1.0f, 0.0f);
+        public static Vector2 UnitY => new Vector2(0.0f, 1.0f);
+
+        public static Vector2 Up => new Vector2(0.0f, -1.0f);
+        public static Vector2 Right => new Vector2(1.0f, 0.0f);
+        public static Vector2 Down => new Vector2(0.0f, 1.0f);
+        public static Vector2 Left => new Vector2(-1.0f, 0.0f);
+
+        public static Vector2 North => Up;
+        public static Vector2 East => Right;
+        public static Vector2 South => Down;
+        public static Vector2 West => Left;
+
+        public static bool operator ==(Vector2 left, Vector2 right) => left.X == right.X && left.Y == right.Y;
+        public static bool operator !=(Vector2 left, Vector2 right) => left.X != right.X || left.Y != right.Y;
+
+        public override bool Equals(object? obj)
+        {
+            if((obj == null) || obj.GetType() != this.GetType())
+                return false;
+
+            return (Vector2)obj == this;
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(this.X, this.Y);
+        }
+
+        public static implicit operator Position2D(Vector2 v) => new((Int32)v.X, (Int32)v.Y);
     }
 
     public struct Position2D

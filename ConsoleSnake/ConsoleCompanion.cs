@@ -28,7 +28,7 @@ static class ConsoleCompanion
         catch { }
     }
 
-    public static void Write(object text, Int32 x, Int32 y, ConsoleColor? foregroundColor = null, ConsoleColor? backgroundColor = null) => Write(text.ToString(), x, y);
+    public static void Write(object text, Int32 x, Int32 y, ConsoleColor? foregroundColor = null, ConsoleColor? backgroundColor = null) => Write(text.ToString() ?? "", x, y);
     public static void Write(string text, Int32 x, Int32 y, ConsoleColor? foregroundColor = null, ConsoleColor? backgroundColor = null)
     {
         CursorPosition = (x, y);

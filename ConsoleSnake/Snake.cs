@@ -1,4 +1,5 @@
-﻿using CC = ConsoleCompanion;
+﻿using System.Xml.Linq;
+using CC = ConsoleCompanion;
 
 namespace ConsoleSnake
 {
@@ -24,16 +25,42 @@ namespace ConsoleSnake
             }
         }
 
-        public Direction Direction { get; set; } = Direction.Down;
+        //public Direction Direction { get; set; } = Direction.Down;
         public ConsoleColor Color { get; set; } = ConsoleColor.Green;
         public Position2D HeadPosition { get; set; } = new();
         public List<Position2D> Segments { get; set; } = new();
+
+        public Vector2 Direction { get; set; } = Vector2.Down;
 
         public Snake(Int32 x, Int32 y) : this(new Position2D(x, y)) { }
         public Snake(Position2D startingPosition)
         {
             HeadPosition = startingPosition;
             Alive = true;
+        }
+
+        public void Movement(PlayArea playArea)
+        {
+            Position2D myPos = HeadPosition + Direction;
+
+            myPos.X = Math.Max(playArea.LeftEdge, myPos.X % (playArea.RightEdge+1));
+            myPos.Y = Math.Max(playArea.TopEdge, myPos.Y % (playArea.BottomEdge+1));
+
+            
+            //if (myPos.Y < playArea.TopEdge)
+            //    myPos.Y = playArea.BottomEdge;
+
+            //if (myPos.Y > playArea.BottomEdge)
+            //    myPos.Y = playArea.TopEdge;
+
+            //if (myPos.X < playArea.LeftEdge)
+            //    myPos.X = playArea.RightEdge;
+
+            //if (myPos.X > playArea.RightEdge)
+            //    myPos.X = playArea.LeftEdge;
+
+            HeadPosition = myPos;
+
         }
 
         /// <summary>
@@ -69,6 +96,13 @@ namespace ConsoleSnake
         /// </summary>
         public void Grow() => Segments.Add(HeadPosition);
 
+        public void Shift()
+        {
+            CC.Write(' ', Tail().X, Tail().Y, null, ConsoleColor.Black);
+            Segments.RemoveAt(0);
+            Grow();
+        }
+
         /// <summary>
         /// Get the snake's head, short-hand for HeadPosition.
         /// </summary>
@@ -90,13 +124,5 @@ namespace ConsoleSnake
         
         public static implicit operator Int32(Snake snake) => snake.Segments.Count;
         public static implicit operator Position2D(Snake snake) => snake.HeadPosition;
-        //public static bool operator >(Snake left, Int32 right) => left.Segments.Count > right;
-        //public static bool operator <(Snake left, Int32 right) => left.Segments.Count < right;
-        //public static bool operator >=(Snake left, Int32 right) => left.Segments.Count >= right;
-        //public static bool operator <=(Snake left, Int32 right) => left.Segments.Count <= right;
-        //public static bool operator >(Snake left, Snake right) => left.Segments.Count > right.Segments.Count;
-        //public static bool operator <(Snake left, Snake right) => left.Segments.Count < right.Segments.Count;
-        //public static bool operator >=(Snake left, Snake right) => left.Segments.Count >= right.Segments.Count;
-        //public static bool operator <=(Snake left, Snake right) => left.Segments.Count <= right.Segments.Count;
     }
 }

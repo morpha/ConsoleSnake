@@ -78,7 +78,7 @@ namespace ConsoleSnake
                             _selection.Selected = _menuItems.Count - 1;
                         break;
                     case InputAction.Enter:
-                        running = _menuItems[_selection.Selected].Action();
+                        running = _menuItems[_selection.Selected].Action != null ? _menuItems[_selection.Selected].Action!() : false;
                         Render();
                         break;
                     case InputAction.Escape:

@@ -192,8 +192,8 @@ namespace ConsoleSnake
         {
             _roundRunning = true;
 
-            _snakes[0].Direction = Direction.Right;
-            _snakes[1].Direction = Direction.Left;
+            _snakes[0].Direction = Vector2.Right;
+            _snakes[1].Direction = Vector2.Left;
             _snakes[0].Color = ConsoleColor.Green;
             _snakes[1].Color = ConsoleColor.Cyan;
             _snakes[0].Segments.Clear();
@@ -222,9 +222,9 @@ namespace ConsoleSnake
             WriteColAt('@', ConsoleColor.Red, _food);
         }
 
-        private static void WriteColAt(object text, ConsoleColor color, Position2D pos) => WriteColAt(text.ToString(), color, pos.X, pos.Y);
+        private static void WriteColAt(object text, ConsoleColor color, Position2D pos) => WriteColAt(text.ToString() ?? "", color, pos.X, pos.Y);
         private static void WriteColAt(string text, ConsoleColor color, Position2D pos) => WriteColAt(text, color, pos.X, pos.Y);
-        private static void WriteColAt(object text, ConsoleColor color, Int32 x, Int32 y) => WriteColAt(text.ToString(), color, x, y);
+        private static void WriteColAt(object text, ConsoleColor color, Int32 x, Int32 y) => WriteColAt(text.ToString() ?? "", color, x, y);
         private static void WriteColAt(string text, ConsoleColor color, Int32 x, Int32 y)
         {
             CC.CursorPosition = (x, y);
@@ -232,10 +232,9 @@ namespace ConsoleSnake
             Console.Write(text);
         }
 
-        private static void GrowSnake(Snake snake)
+        private static void AdvanceSnake(Snake snake)
         {
-            ++snake;
-            Scoreboard.SetScore(0, snake);
+            snake.Shift();
             WriteColAt('#', snake.Color, snake);
         }
 
@@ -289,14 +288,17 @@ namespace ConsoleSnake
                     // is this snake picking up food?
                     if (Collision(_food, snake))
                     {
+                        snake.Grow();
+                        Scoreboard.SetScore(0, snake);
                         SpawnFood();
+                        
                     }
-                    else
-                    {
-                        DeleteAt(snake.Tail());
-                    }
+                    //else
+                    //{
+                    //    DeleteAt(snake.Tail());
+                    //}
 
-                    GrowSnake(snake);
+                    AdvanceSnake(snake);
                 }
 
             }
@@ -314,37 +316,7 @@ namespace ConsoleSnake
         {
             foreach(Snake snake in _snakes)
             {
-                Position2D position = snake;
-
-                switch (snake.Direction)
-                {
-                    case Direction.Up:
-                        if (position.Y - 1 < _playArea.TopEdge)
-                            position.Y = _playArea.BottomEdge;
-                        else
-                            --position.Y;
-                        break;
-                    case Direction.Down:
-                        if (position.Y + 1 > _playArea.BottomEdge)
-                            position.Y = _playArea.TopEdge;
-                        else
-                            ++position.Y;
-                        break;
-                    case Direction.Left:
-                        if (position.X - 1 < _playArea.LeftEdge)
-                            position.X = _playArea.RightEdge;
-                        else
-                            --position.X;
-                        break;
-                    case Direction.Right:
-                        if (position.X + 1 > _playArea.RightEdge)
-                            position.X = _playArea.LeftEdge;
-                        else
-                            ++position.X;
-                        break;
-                }
-
-                snake.HeadPosition = position;
+                snake.Movement(_playArea);
             }
         }
 
@@ -356,38 +328,38 @@ namespace ConsoleSnake
                 {
                     // Movement P1
                     case ConsoleKey.UpArrow:
-                        if(_snakes[0].Direction != Direction.Down)
-                            _snakes[0].Direction = Direction.Up;
+                        if(_snakes[0].Direction != Vector2.Down)
+                            _snakes[0].Direction = Vector2.Up;
                         break;
                     case ConsoleKey.DownArrow:
-                        if (_snakes[0].Direction != Direction.Up)
-                            _snakes[0].Direction = Direction.Down;
+                        if (_snakes[0].Direction != Vector2.Up)
+                            _snakes[0].Direction = Vector2.Down;
                         break;
                     case ConsoleKey.LeftArrow:
-                        if (_snakes[0].Direction != Direction.Right)
-                            _snakes[0].Direction = Direction.Left;
+                        if (_snakes[0].Direction != Vector2.Right)
+                            _snakes[0].Direction = Vector2.Left;
                         break;
                     case ConsoleKey.RightArrow:
-                        if (_snakes[0].Direction != Direction.Left)
-                            _snakes[0].Direction = Direction.Right;
+                        if (_snakes[0].Direction != Vector2.Left)
+                            _snakes[0].Direction = Vector2.Right;
                         break;
 
                     // Movement P2
                     case ConsoleKey.W:
-                        if (_snakes[1].Direction != Direction.Down)
-                            _snakes[1].Direction = Direction.Up;
+                        if (_snakes[1].Direction != Vector2.Down)
+                            _snakes[1].Direction = Vector2.Up;
                         break;
                     case ConsoleKey.S:
-                        if (_snakes[1].Direction != Direction.Up)
-                            _snakes[1].Direction = Direction.Down;
+                        if (_snakes[1].Direction != Vector2.Up)
+                            _snakes[1].Direction = Vector2.Down;
                         break;
                     case ConsoleKey.A:
-                        if (_snakes[1].Direction != Direction.Right)
-                            _snakes[1].Direction = Direction.Left;
+                        if (_snakes[1].Direction != Vector2.Right)
+                            _snakes[1].Direction = Vector2.Left;
                         break;
                     case ConsoleKey.D:
-                        if (_snakes[1].Direction != Direction.Left)
-                            _snakes[1].Direction = Direction.Right;
+                        if (_snakes[1].Direction != Vector2.Left)
+                            _snakes[1].Direction = Vector2.Right;
                         break;
 
                     case ConsoleKey.Escape:
