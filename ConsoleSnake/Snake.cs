@@ -54,7 +54,7 @@ namespace ConsoleSnake
         /// </summary>
         /// <param name="newPosition"></param>
         /// <param name="constraint"></param>
-        public bool MoveTo(Position2D newPosition, ISpatialConstraint? constraint = null)
+        public bool MoveTo(Position2D newPosition, ISpatialConstraint2D? constraint = null)
         {
             if(constraint != null)
             {

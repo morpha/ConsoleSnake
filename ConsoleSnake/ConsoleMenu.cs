@@ -8,38 +8,47 @@ using CC = ConsoleCompanion;
 
 namespace ConsoleSnake
 {
-    internal class Menu
+    class ConsoleMenu
     {
         private enum InputAction
         {
             Invalid,
-            PrevItem,
-            NextItem,
+            Up,
+            Down,
+            Left,
+            Right,
             Enter,
             Escape
         }
-        internal class MenuItem
+        internal struct MenuItem
         {
             /// <summary>
             /// Action to perform when the menu entry is selected.
             /// </summary>
-            /// <returns>true = the menu will resume after executing the action, false = the menu will return flow to where the Show()-method was called from.</returns>
+            /// <returns>true = the menu will resume after executing the action, false = the menu will return flow to where <see cref="Show"/> was called from.</returns>
             public delegate bool MenuAction();
             public string Label { get; set; } = "";
             public string Description { get; set; } = "";
             public MenuAction? Action { get; set; }
+
+            public MenuItem(string label, string desc = "", MenuAction? action = null)
+            {
+                Label = label;
+                Description = desc;
+                Action = action;
+            }
         }
 
         private List<MenuItem> _menuItems = new();
         private (Int32 Selected, Int32 Previous) _selection = (-1, -1);
         private Int32 _longestLabel = 0;
         private (Int32 left, Int32 top, Int32 right, Int32 bottom) _bounds = (0, 0, 0, 0);
-        public Menu() { }
+        public ConsoleMenu() { }
         public void Show()
         {
 
             CalculateBounds();
-            Draw();
+            Render();
 
             bool running = true;
             InputAction action;
@@ -49,19 +58,19 @@ namespace ConsoleSnake
                 {
                     Console.Clear();
                     CalculateBounds();
-                    Draw();
+                    Render();
                 }
                 action = HandleInput();
                 switch(action)
                 {
-                    case InputAction.PrevItem:
+                    case InputAction.Up:
                         _selection.Previous = _selection.Selected;
                         if (_selection.Selected > 0)
                             _selection.Selected -= 1;
                         else
                             _selection.Selected = 0;
                         break;
-                    case InputAction.NextItem:
+                    case InputAction.Down:
                         _selection.Previous = _selection.Selected;
                         if (_selection.Selected < _menuItems.Count - 1)
                             _selection.Selected += 1;
@@ -70,7 +79,7 @@ namespace ConsoleSnake
                         break;
                     case InputAction.Enter:
                         running = _menuItems[_selection.Selected].Action();
-                        Draw();
+                        Render();
                         break;
                     case InputAction.Escape:
                         break;
@@ -113,7 +122,7 @@ namespace ConsoleSnake
             }
         }
 
-        private void Draw()
+        private void Render()
         {
             Console.CursorLeft = _bounds.left;            
             Console.CursorTop = _bounds.top;
@@ -160,12 +169,17 @@ namespace ConsoleSnake
                 Console.WriteLine(_menuItems[i].Label);
             }
         }
+
+        /// <summary>
+        /// Wait for input and determine which action the user requested (or return Invalid)
+        /// </summary>
+        /// <returns>Menu.InputAction assigned to the key the user pressed, or InputAction.Invalid if the key did not match any InputAction.</returns>
         private static InputAction HandleInput()
         {
             return Console.ReadKey(true).Key switch
             {
-                ConsoleKey.UpArrow or ConsoleKey.W      => InputAction.PrevItem,
-                ConsoleKey.DownArrow or ConsoleKey.S    => InputAction.NextItem,
+                ConsoleKey.UpArrow or ConsoleKey.W      => InputAction.Up,
+                ConsoleKey.DownArrow or ConsoleKey.S    => InputAction.Down,
                 ConsoleKey.Enter or ConsoleKey.Spacebar => InputAction.Enter,
                 ConsoleKey.Escape                       => InputAction.Escape,
                 _                                       => InputAction.Invalid

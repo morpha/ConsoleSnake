@@ -8,13 +8,13 @@ using System.Threading.Tasks;
 namespace ConsoleSnake
 {
 
-    public interface ISpatialConstraint
+    public interface ISpatialConstraint2D
     {
-        bool IsInside<T>(T val);
-        bool IsOutside<T>(T val);
+        bool IsInside(Position2D pos);
+        bool IsOutside(Position2D pos);
     }
     /// <summary>
-    /// Used to indicate the direction of movement (heading) of snake entities.
+    /// Used to indicate the direction of movement (heading) of entities.
     /// </summary>
     public enum Direction
     {
@@ -34,33 +34,6 @@ namespace ConsoleSnake
         Head,
         Wall
     }
-    public struct PlayArea : ISpatialConstraint
-    {
-        public PlayArea(Int32 left, Int32 top, Int32 right, Int32 bottom)
-        {
-            LeftEdge = left;
-            TopEdge = top;
-            RightEdge = right;
-            BottomEdge = bottom;
-        }
-        public Int32 LeftEdge { get; set; }
-        public Int32 TopEdge { get; set; }
-        public Int32 RightEdge { get; set; }
-        public Int32 BottomEdge { get; set; }
-
-        public bool IsInside<T>(T pos)
-        {
-            if(typeof(T) == typeof(Position2D))
-            {
-                Console.WriteLine("it's a pos2d");
-                return true;
-            }
-            Console.WriteLine("it's NOT a pos2d");
-            return false;
-        }
-
-        public bool IsOutside<T>(T pos) => !IsInside(pos);
-    }
 
     public struct Position2D
     {
@@ -74,5 +47,26 @@ namespace ConsoleSnake
         public static Position2D operator -(Position2D left, Position2D right) => new Position2D(left.X - right.X, left.Y - right.Y);
         public static Position2D operator ++(Position2D pos) => pos += 1;
         public static Position2D operator --(Position2D pos) => pos -= 1;
+
+        public override string ToString() => $"Position2D[X:{X}, Y:{Y}]";
+    }
+
+    public struct PlayArea : ISpatialConstraint2D
+    {
+        public PlayArea(Int32 left, Int32 top, Int32 right, Int32 bottom)
+        {
+            LeftEdge = left;
+            TopEdge = top;
+            RightEdge = right;
+            BottomEdge = bottom;
+        }
+        public Int32 LeftEdge { get; set; }
+        public Int32 TopEdge { get; set; }
+        public Int32 RightEdge { get; set; }
+        public Int32 BottomEdge { get; set; }
+
+        public bool IsInside(Position2D pos) => (LeftEdge <= pos.X && pos.X <= RightEdge && TopEdge <= pos.Y && pos.Y <= BottomEdge);
+
+        public bool IsOutside(Position2D pos) => !IsInside(pos);
     }
 }

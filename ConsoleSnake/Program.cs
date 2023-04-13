@@ -61,7 +61,7 @@ namespace ConsoleSnake
 
         static void Options()
         {
-            Menu menu = new();
+            ConsoleMenu menu = new();
             menu.AddItem("Window Size", "Play a single-player game.", () => { _windowWidth = Console.WindowWidth; _windowHeight = Console.WindowHeight; Setup(); return true; });
             menu.AddItem("Some Option 2", "Play a two-player game.", () => { return true; });
             menu.AddItem("Some Option 3", "Change game options.", () => { return true; });
@@ -71,7 +71,7 @@ namespace ConsoleSnake
 
         private static void ShowMenu()
         {
-            Menu menu = new();
+            ConsoleMenu menu = new();
             menu.AddItem("Play [1P]", "Play a single-player game.", () => { _mode = GameMode.Singleplayer;  return false; });
             menu.AddItem("Play [2P]", "Play a two-player game.", () => { _mode = GameMode.Multiplayer; return false; });
             menu.AddItem("Options", "Change game options.", () => { Options(); return true; });
